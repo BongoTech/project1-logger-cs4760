@@ -1,9 +1,11 @@
 /**
+ *  @section INFO
+ *
  *  @file log.h
  *  @author Cory Mckiel
  *  @version 1.0
  *  @date September 7, 2022 Created
- *  @date September 7, 2022 Last modified
+ *  @date September 8, 2022 Last modified
  *
  *  @section LICENSE 
  *
