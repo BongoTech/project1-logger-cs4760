@@ -21,6 +21,9 @@
  *  to disk, and clear the log of all messages.
  */
 
+#ifndef LOG_H
+#define LOG_H
+
 #include <time.h>
 
 /**
@@ -85,3 +88,4 @@ char * getlog();
  */
 int savelog(char *filename);
 
+#endif
