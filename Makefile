@@ -1,7 +1,7 @@
-CC 			= gcc			#default compiler
-CFLAGS 	= -g			#compilation flags
-TARGET 	= driver
-OBJS 		= driver.o loglib.o
+CC			= gcc			#default compiler
+CFLAGS	= -g			#compilation flags
+TARGET	= driver
+OBJS		= driver.o loglib.o
 .SUFFIXES: .c .o
 
 .DEFAULT_GOAL : $(TARGET)
