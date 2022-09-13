@@ -5,7 +5,7 @@
  *  @author Cory Mckiel
  *  @version 1.0
  *  @date September 12, 2022 Created
- *  @date September 12, 2022 Last modified
+ *  @date September 13, 2022 Last modified
  *
  *  @section LICENSE 
  *
@@ -22,13 +22,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include <time.h>
 #include "log.h"
 
-
-
+/** Helper function declarations. For details, see function definitions. */
 int invalid_msg(const char, const char*);
-
 
 /**
  *  Define log_t. The log is implemented as a queue data structure 
@@ -42,6 +41,10 @@ typedef struct list_struct {
 
 static log_t *headptr = NULL;
 static log_t *tailptr = NULL;
+
+static const int MX_MSG_LEN = 200;
+
+extern int errno;
 
 /**
  *  addmsg creates a message_t and appends it to the log.
@@ -57,16 +60,21 @@ int addmsg(const char type, const char *msg) {
    *  that msg is not NULL.
    */
   if (invalid_msg(type, msg)) {
+    fprintf(stderr, "Error: Invalid Message.\n");
     return -1;
   }
 
   /** 
    *  Begin creating the new message. msg length arbitrarily capped at
-   *  200 characters for security.
+   *  MX_MSG_LEN characters for security.
    */
   message_t new_msg;
-  new_msg.string = (char *)malloc(sizeof(char)*200);
-  strncpy(new_msg.string, msg, 200);
+  if ((new_msg.string = (char *)malloc(sizeof(char)*MX_MSG_LEN)) == NULL) {
+    fprintf(stderr, "Error: malloc could not allocate memory for string.\n");
+    fprintf(stderr, "Error: %s\n", strerror(errno));
+    return -1;
+  }
+  strncpy(new_msg.string, msg, MX_MSG_LEN);
   new_msg.type = type;
   time(&new_msg.time);
 
@@ -75,14 +83,25 @@ int addmsg(const char type, const char *msg) {
    *  setting both pointers to it.
    */
   if (headptr == NULL && tailptr == NULL) {
-    headptr = tailptr = (log_t *)malloc(sizeof(log_t));
+    if ((headptr = tailptr = (log_t *)malloc(sizeof(log_t))) == NULL) {
+      fprintf(stderr, "Error: malloc could not allocate memory for log.\n");
+      fprintf(stderr, "Error: %s\n", strerror(errno));
+      return -1;
+    }
     headptr->message = new_msg;
     headptr->next = NULL;
-    return 0;   ///< The addition was successful, so exit the program.
+    return 0;
   }
 
-  /** If this part is executing, the log was unempty. */
-  log_t *new_entry = (log_t *)malloc(sizeof(log_t));
+  /** If this part is executing, the log was unempty.
+   *  Create a new node and append it to the end of the log.
+   */
+  log_t *new_entry;
+  if ((new_entry = (log_t *)malloc(sizeof(log_t))) == NULL) {
+    fprintf(stderr, "Error: malloc could not allocate memory for log.\n");
+    fprintf(stderr, "Error: %s\n", strerror(errno));
+    return -1;
+  }
   new_entry->message = new_msg;
   new_entry->next = NULL;
   tailptr->next = new_entry;
@@ -101,11 +120,12 @@ int addmsg(const char type, const char *msg) {
  */
 void clearlog() {
   
-  log_t *current_node, *prev_node;
+  log_t *current_node, *prev_node;  ///< two nodes for traversing the queue.
   current_node = headptr;
 
+  /** traverse the list freeing all the message strings and log nodes. */
   while (current_node != NULL) {
-    printf("%s\n", current_node->message.string);
+    printf("%s\n", current_node->message.string); //TODO: Remove line after testing.
     prev_node = current_node;
     current_node = current_node->next;
     free(prev_node->message.string);
@@ -138,7 +158,45 @@ int savelog(char *filename) {
   return 0;
 }
 
-
+/**
+ *  invalid_msg is a helper function used by addmsg to check to see if
+ *  the message type and contents are valid.
+ */
 int invalid_msg(const char type, const char *msg) {
+  
+  if (msg == NULL) {
+    fprintf(stderr, "Error: Message content cannot be empty.\n");
+    return 1;
+  }
+
+  switch (type) {
+    case 'I':
+      break;
+    case 'W':
+      break;
+    case 'E':
+      break;
+    case 'F':
+      break;
+    default:
+      fprintf(stderr, "Error: Invalid message type.\n");
+      fprintf(stderr, "Must be a single capital character from I, W, E, F.\n");
+      return 1;
+  }
+
   return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
