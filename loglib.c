@@ -209,6 +209,18 @@ char * getlog() {
  *  @return int 0 if successful, -1 otherwise.
  */
 int savelog(char *filename) {
+
+  FILE *file;
+  if ((file = fopen(filename, "w")) == NULL) {
+    fprintf(stderr, "Error: in savelog(): fopen(): %s\n", strerror(errno));
+    return -1;
+  }
+  
+  char *log = getlog();
+  fprintf(file, "%s", log);
+  free(log);
+  fclose(file);
+
   return 0;
 }
 
@@ -292,11 +304,3 @@ static char * msg_to_str(message_t msg) {
 
   return msg_str;
 }
-
-
-
-
-
-
-
-
