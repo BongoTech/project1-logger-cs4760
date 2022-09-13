@@ -21,7 +21,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <time.h>
 #include "log.h"
+
+
+
+int invalid_msg(const char, const char*);
+
 
 /**
  *  Define log_t. The log is implemented as a queue data structure 
@@ -44,6 +51,43 @@ static log_t *tailptr = NULL;
  *  @return int 0 if successful, -1 otherwise.
  */
 int addmsg(const char type, const char *msg) {
+  
+  /** 
+   *  Check to ensure that message type is either I, W, E, or F and
+   *  that msg is not NULL.
+   */
+  if (invalid_msg(type, msg)) {
+    return -1;
+  }
+
+  /** 
+   *  Begin creating the new message. msg length arbitrarily capped at
+   *  200 characters for security.
+   */
+  message_t new_msg;
+  new_msg.string = (char *)malloc(sizeof(char)*200);
+  strncpy(new_msg.string, msg, 200);
+  new_msg.type = type;
+  time(&new_msg.time);
+
+  /**
+   *  Check to see if the log is empty. If so, add the first message by
+   *  setting both pointers to it.
+   */
+  if (headptr == NULL && tailptr == NULL) {
+    headptr = tailptr = (log_t *)malloc(sizeof(log_t));
+    headptr->message = new_msg;
+    headptr->next = NULL;
+    return 0;   ///< The addition was successful, so exit the program.
+  }
+
+  /** If this part is executing, the log was unempty. */
+  log_t *new_entry = (log_t *)malloc(sizeof(log_t));
+  new_entry->message = new_msg;
+  new_entry->next = NULL;
+  tailptr->next = new_entry;
+  tailptr = tailptr->next;
+
   return 0;
 }
 
@@ -56,6 +100,17 @@ int addmsg(const char type, const char *msg) {
  *  be lost.
  */
 void clearlog() {
+  
+  log_t *current_node, *prev_node;
+  current_node = headptr;
+
+  while (current_node != NULL) {
+    printf("%s\n", current_node->message.string);
+    prev_node = current_node;
+    current_node = current_node->next;
+    free(prev_node->message.string);
+    free(prev_node);
+  }
 }
 
 /**
@@ -80,5 +135,10 @@ char * getlog() {
  *  @return int 0 if successful, -1 otherwise.
  */
 int savelog(char *filename) {
+  return 0;
+}
+
+
+int invalid_msg(const char type, const char *msg) {
   return 0;
 }

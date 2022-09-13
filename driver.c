@@ -23,6 +23,13 @@
 
 int main(int argc, char *argv[]) {
   printf("(testing) Return value of savelog: %d\n", savelog(NULL));
+
+  addmsg('I', "Hello msg 1.");
+  addmsg('W', "Boom");
+  addmsg('I', "Ywag");
+
+  clearlog();
+
   return 0;
 }
 
