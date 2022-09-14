@@ -20,24 +20,31 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include "log.h"
 
 const int MX_FILENAME_LEN = 50;
 const int MX_WAITTIME_DIGITS = 20;
+const int MX_MSG_LEN = 200;
+
+extern int errno;
 
 /** Helper functions. See definitions for more details. */
+int new_message();
+void display_main_menu();
 void help_msg(char *);
 int valid_number(char[MX_WAITTIME_DIGITS]);
+
 
 int main(int argc, char *argv[]) {
 
   /** Begin extracting arguments from argv. */
   int seconds = 0;
-  int time_option = 0;
+  int time_option = 0;                ///< flag: 1 if -t is used, 0 otherwise.
   char filename[MX_FILENAME_LEN];
-  char tempstr[MX_WAITTIME_DIGITS];   ///< Temporarily holds time string for error checking.
+  char tempstr[MX_WAITTIME_DIGITS];   ///< Store time until check for errors.
 
   int option;
   while ((option = getopt(argc, argv, "ht:")) != -1) {
@@ -75,11 +82,120 @@ int main(int argc, char *argv[]) {
     }
   }
  
-  /** Print all options for testing */
-  printf("Seconds: %d\n", seconds);
-  printf("Filename: %s\n", filename);
+  /** Begin prompting user for messages and logging them. */
+  printf("Welcome to this logging program.\n");
+
+  char menu_choice;
+  char buff[2];
+
+  while (1) {
+    display_main_menu();
+    
+    if (fgets(buff, sizeof(buff), stdin) == NULL) {
+      fprintf(stderr, "%s: Error: invalid input: %s\n", 
+        argv[0], strerror(errno));
+      return -1;
+    }
+
+    if (buff[0] == 'q') {
+      break;
+    }
+
+    if (buff[0] == 'a' || buff[0] == 's' || buff[0] == 'g' || buff[0] == 'c') {
+      menu_choice = buff[0];
+    }
+    else {
+      fprintf(stderr, "Error: invalid menu choice.\n");
+      continue;
+    }
+
+    char *log;
+    switch (menu_choice) {
+      case 'a':
+        if (new_message() == -1) {
+          fprintf(stderr, "%s: Error: Could not add new message.\n", argv[0]);
+          return -1;
+        }
+        break;
+      case 's':
+        if (savelog(filename) == -1) {
+          fprintf(stderr, "%s: Error: Could not save log.\n", argv[0]);
+          return -1;
+        }
+        break;
+      case 'g':
+        if ((log = getlog()) == NULL) {
+          fprintf(stderr, "%s: Error: Could not print log.\n", argv[0]);
+          return -1;
+        }
+        printf("%s", log);
+        free(log);
+        break;
+      case 'c':
+        clearlog();
+        break;
+    }
+  }
  
   return 0;
+}
+
+/**
+ *  new_message prompts user for message and adds the message to log.
+ *  returns -1 on failure, 0 on success.
+ */
+int new_message() {
+
+    char c;                   ///< Used for buffer flushing.
+    char type;
+    char message[MX_MSG_LEN];
+    
+    printf("Enter your message type (I/W/E/F):\n");
+    
+    while ((c = getchar()) != '\n' && c != EOF) { }
+    if (fgets(message, sizeof(message), stdin) == NULL) {
+      fprintf(stderr, "Error: invalid input: %s\n", strerror(errno));
+      return -1;
+    }
+
+    if (message[0] == 'I' || message[0] == 'W' || message[0] == 'E' ||
+      message[0] == 'F') {
+      type = message[0];
+    }
+    else {
+      fprintf(stderr, "Error: invalid type: %s\n", strerror(errno));
+      return -1;
+    }
+    
+    printf("Enter your message:\n");
+   
+    //while ((c = getchar()) != '\n' && c != EOF) { }
+    if (fgets(message, sizeof(message), stdin) == NULL) {
+      fprintf(stderr, "Error: invalid input: %s\n", strerror(errno));
+      return -1;
+    }
+
+    message[MX_MSG_LEN-1] = '\0'; ///< Make sure the msg is null terminated.
+
+    if (addmsg(type, message) == -1) {
+      fprintf(stderr, "Error: in new_message(): Unable to add message.\n");
+      return -1;
+    }
+
+    return 0;
+}
+
+/**
+ *  display_main_menu does exactly what you would expect.
+ */
+void display_main_menu() {
+  
+  printf("Main Menu:\n");
+  printf("Press 'a' to add message.\n");
+  printf("Press 's' to save the log.\n");
+  printf("Press 'g' to print the log to console.\n");
+  printf("Press 'c' to clear the log.\n");
+  printf("Press 'q' to quit.\n");
 }
 
 /**
