@@ -1,1 +1,48 @@
 # project1-logger-cs4760
+
+TITLE:  LOGGER
+
+DESCRIPTION: 
+
+  Logger helps a user log messages. The user can save the log to a file of 
+  their choosing. 
+
+FILES:  driver.c loglib.c log.h
+
+TO COMPILE:
+
+  OPTION ONE: Use the supplied Makefile. Type make.
+  OPTION TWO: Manually using gcc. Type:
+    gcc -c loglib.c
+    gcc -c driver.c
+    gcc -o driver driver.o loglib.o
+
+TO RUN:
+
+  ./driver [-h] [-t sec] [logfile]
+
+  Where all options are optional.
+
+  -h      displays a help message.
+
+  -t sec  sets a random wait time between prompts with the
+          average wait time equal to the integer sec. If the -t
+          option is used, sec must be provided. sec is a positive
+          integer. The default is 0 seconds of waittime.
+
+  logfile is an option to let the user specify which file they would
+          like to save the log to. The default is messages.log.
+          NOTE: Any existing file provided to driver will be erased to save
+          the log.
+
+VERSION CONTROL:
+
+  This program uses git and github for version control. To see commits, 
+  type git log.
+
+NOTES:
+
+  I did not use perror for this assignment because it does not support
+  format specifiers. Instead I used fprintf to print to stderr and included
+  errno information using strerror().
+
