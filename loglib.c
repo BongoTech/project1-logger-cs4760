@@ -5,7 +5,7 @@
  *  @author Cory Mckiel
  *  @version 1.0
  *  @date September 12, 2022 Created
- *  @date September 13, 2022 Last modified
+ *  @date September 14, 2022 Last modified
  *
  *  @section LICENSE 
  *
@@ -30,6 +30,7 @@
 static int invalid_msg(const char, const char*);
 static int num_of_log_entries();
 static char * msg_to_str(message_t);
+void remove_newline(char *);
 
 /**
  *  Define log_t. The log is implemented as a queue data structure 
@@ -132,6 +133,8 @@ void clearlog() {
     free(prev_node->message.string);
     free(prev_node);
   }
+  
+  headptr = tailptr = NULL;
 }
 
 /**
@@ -199,6 +202,7 @@ char * getlog() {
   }
   
   return log_string;
+
 }
 
 /**
@@ -209,6 +213,11 @@ char * getlog() {
  *  @return int 0 if successful, -1 otherwise.
  */
 int savelog(char *filename) {
+
+  if (headptr == NULL) {
+    fprintf(stderr, "Error: in savelog(): Cannot save empty log.\n");
+    return -1;
+  }
 
   FILE *file;
   if ((file = fopen(filename, "w")) == NULL) {
@@ -300,7 +309,27 @@ static char * msg_to_str(message_t msg) {
   strftime(time_str, sizeof(time_str), "%H:%M:%S", time_info);
 
   /** Build the string to return. */
+  remove_newline(msg.string); ///< For formatting.
   sprintf(msg_str, "%c: %s %s\n", msg.type, msg.string, time_str);
 
   return msg_str;
+}
+
+/**
+ *  remove_newline is a helper function that removes the newline
+ *  charater at the end of a message string.
+ */
+void remove_newline(char *str) {
+
+  int i = 0;
+  while (str[i] != '\0') {
+    if (str[i] == '\n' ) {
+      str[i] = '\0';
+      break;
+    }
+    i += 1;
+    if (i >= MX_MSG_LEN) {
+      break;
+    }
+  }
 }
