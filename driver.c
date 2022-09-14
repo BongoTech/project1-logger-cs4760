@@ -5,7 +5,7 @@
  *  @author Cory Mckiel
  *  @version 1.0
  *  @date September 12, 2022 Created
- *  @date September 13, 2022 Last modified
+ *  @date September 14, 2022 Last modified
  *
  *  @section LICENSE 
  *
@@ -32,7 +32,7 @@ const int MX_MSG_LEN = 200;
 extern int errno;
 
 /** Helper functions. See definitions for more details. */
-int new_message();
+int new_message(char *);
 void display_main_menu();
 void help_msg(char *);
 int valid_number(char[MX_WAITTIME_DIGITS]);
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
   printf("Welcome to this logging program.\n");
 
   char menu_choice;
-  char buff[2];
+  char buff[3];
 
   while (1) {
     display_main_menu();
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    if (buff[0] == 'a' || buff[0] == 's' || buff[0] == 'g' || buff[0] == 'c') {
+    if (buff[0] == 'a' || buff[0] == 's' || buff[0] == 'p' || buff[0] == 'c') {
       menu_choice = buff[0];
     }
     else {
@@ -110,20 +110,24 @@ int main(int argc, char *argv[]) {
     }
 
     char *log;
+    char type;  ///< Used to check for fatal messages.
+
     switch (menu_choice) {
       case 'a':
-        if (new_message() == -1) {
+        if (new_message(&type) == -1) {
           fprintf(stderr, "%s: Error: Could not add new message.\n", argv[0]);
           return -1;
         }
+        printf("Message saved!\n");
         break;
       case 's':
         if (savelog(filename) == -1) {
           fprintf(stderr, "%s: Error: Could not save log.\n", argv[0]);
           return -1;
         }
+        printf("Log saved!\n");
         break;
-      case 'g':
+      case 'p':
         if ((log = getlog()) == NULL) {
           fprintf(stderr, "%s: Error: Could not print log.\n", argv[0]);
           return -1;
@@ -133,10 +137,23 @@ int main(int argc, char *argv[]) {
         break;
       case 'c':
         clearlog();
+        printf("Log cleared!\n");
         break;
     }
+
+    /** Check for a fatal message. */
+    if (type == 'F') {
+      fprintf(stderr, "Fatal message! Saving log and exiting program...\n");
+      if (savelog(filename) == -1) {
+        fprintf(stderr, "%s: Error: Could not save log.\n", argv[0]);
+      }
+      break;
+    }
   }
- 
+
+  clearlog(); 
+  printf("Goodbye!\n");   
+    
   return 0;
 }
 
@@ -144,15 +161,12 @@ int main(int argc, char *argv[]) {
  *  new_message prompts user for message and adds the message to log.
  *  returns -1 on failure, 0 on success.
  */
-int new_message() {
+int new_message(char *type) {
 
-    char c;                   ///< Used for buffer flushing.
-    char type;
     char message[MX_MSG_LEN];
     
     printf("Enter your message type (I/W/E/F):\n");
     
-    while ((c = getchar()) != '\n' && c != EOF) { }
     if (fgets(message, sizeof(message), stdin) == NULL) {
       fprintf(stderr, "Error: invalid input: %s\n", strerror(errno));
       return -1;
@@ -160,7 +174,7 @@ int new_message() {
 
     if (message[0] == 'I' || message[0] == 'W' || message[0] == 'E' ||
       message[0] == 'F') {
-      type = message[0];
+      *type = message[0];
     }
     else {
       fprintf(stderr, "Error: invalid type: %s\n", strerror(errno));
@@ -169,7 +183,6 @@ int new_message() {
     
     printf("Enter your message:\n");
    
-    //while ((c = getchar()) != '\n' && c != EOF) { }
     if (fgets(message, sizeof(message), stdin) == NULL) {
       fprintf(stderr, "Error: invalid input: %s\n", strerror(errno));
       return -1;
@@ -177,7 +190,7 @@ int new_message() {
 
     message[MX_MSG_LEN-1] = '\0'; ///< Make sure the msg is null terminated.
 
-    if (addmsg(type, message) == -1) {
+    if (addmsg(*type, message) == -1) {
       fprintf(stderr, "Error: in new_message(): Unable to add message.\n");
       return -1;
     }
@@ -190,12 +203,13 @@ int new_message() {
  */
 void display_main_menu() {
   
-  printf("Main Menu:\n");
+  printf("\nMain Menu:\n");
   printf("Press 'a' to add message.\n");
   printf("Press 's' to save the log.\n");
-  printf("Press 'g' to print the log to console.\n");
+  printf("Press 'p' to print the log to console.\n");
   printf("Press 'c' to clear the log.\n");
   printf("Press 'q' to quit.\n");
+  printf("--> ");
 }
 
 /**
