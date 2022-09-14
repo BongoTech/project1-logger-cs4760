@@ -81,12 +81,15 @@ int main(int argc, char *argv[]) {
       return -1;
     }
   }
+
+  srand(time(0));
  
   /** Begin prompting user for messages and logging them. */
   printf("Welcome to this logging program.\n");
 
   char menu_choice;
   char buff[3];
+  int waittime;
 
   while (1) {
     display_main_menu();
@@ -149,6 +152,9 @@ int main(int argc, char *argv[]) {
       }
       break;
     }
+    
+    waittime = (rand() % ((2*seconds) + 1));
+    sleep(waittime);
   }
 
   clearlog(); 
